@@ -89,6 +89,7 @@
                         type="tel"
                         maxlength="30"
                         autocomplete="tel"
+                        required
                         class="form-control <?= !empty($errors['phone']) ? 'is-invalid' : '' ?>"
                         value="<?= e($_POST['phone'] ?? '') ?>"
                     >
@@ -110,6 +111,7 @@
                         type="text"
                         maxlength="120"
                         autocomplete="address-level2"
+                        required
                         class="form-control <?= !empty($errors['city']) ? 'is-invalid' : '' ?>"
                         value="<?= e($_POST['city'] ?? '') ?>"
                     >

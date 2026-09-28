@@ -70,14 +70,27 @@ class AuthController
                 $errors['email'] = 'Veuillez saisir une adresse e-mail valide.';
             }
 
-            if ($phone !== '' && !preg_match('/^[0-9+\s().-]{6,30}$/', $phone)) {
-                $errors['phone'] = 'Veuillez saisir un numéro de téléphone valide.';
-            }
+            if ($phone === '') {
+    $errors['phone'] = 'Le numéro de téléphone est obligatoire.';
+} elseif (!preg_match('/^(?:\+33|0)[1-9](?:[\s.-]?\d{2}){4}$/', $phone)) {
+    $errors['phone'] = 'Veuillez saisir un numéro de téléphone français valide.';
+}
 
-            if (mb_strlen($city) > 120) {
-                $errors['city'] = 'La ville ne doit pas dépasser 120 caractères.';
-            }
+if ($city === '') {
+    $errors['city'] = 'La ville est obligatoire.';
+} elseif (mb_strlen($city) > 120) {
+    $errors['city'] = 'La ville ne doit pas dépasser 120 caractères.';
+} else {
+    require_once __DIR__ . '/../models/CityValidator.php';
 
+    $cityExists = CityValidator::existsInFrance($city);
+
+    if ($cityExists === false) {
+        $errors['city'] = 'Cette ville française n’a pas été reconnue.';
+    } elseif ($cityExists === null) {
+        $errors['city'] = 'La vérification de la ville est temporairement indisponible. Veuillez réessayer.';
+    }
+}
             if ($password === '') {
                 $errors['password'] = 'Le mot de passe est obligatoire.';
             } elseif (strlen($password) < 8) {
@@ -85,22 +98,28 @@ class AuthController
             }
 
             // Création uniquement si tous les champs sont valides
-            if (empty($errors)) {
-                require_once __DIR__ . '/../models/User.php';
+if (empty($errors)) {
+    require_once __DIR__ . '/../models/User.php';
 
-                try {
-                    User::create($_POST);
+    // Vérification explicite : un e-mail = un seul compte
+    if (User::emailExists($email)) {
+        $errors['email'] = 'Cette adresse e-mail est déjà utilisée.';
+    } else {
+        try {
+            User::create($_POST);
 
-                    flash(
-                        'success',
-                        'Compte créé. Vous pouvez maintenant vous connecter.'
-                    );
+            flash(
+                'success',
+                'Compte créé. Vous pouvez maintenant vous connecter.'
+            );
 
-                    redirect('/login');
-                } catch (Throwable $e) {
-                    $errors['email'] = 'Cette adresse e-mail est déjà utilisée.';
-                }
-            }
+            redirect('/login');
+        } catch (Throwable $e) {
+            // La contrainte UNIQUE de la base reste une seconde sécurité.
+            $errors['email'] = 'Cette adresse e-mail est déjà utilisée.';
+        }
+    }
+}
         }
 
         view('auth/register', compact('errors'));
