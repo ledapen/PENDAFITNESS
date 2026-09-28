@@ -14,7 +14,7 @@ Projet de **PENDA ESSAMA LEOPOLD EMMANUEL**. Application web de réservation d'a
 - Sécurité : password_hash, PDO préparé, CSRF, contrôle d'accès, échappement HTML
 
 ## Stack
-PHP 8 / MVC / PDO / MySQL ou TiDB Cloud / HTML5 / CSS3 / Bootstrap 5 / JavaScript / Chart.js / Git / GitHub / Render.
+PHP 8 / MVC / PDO / TiDB Cloud (SQL) / Render Key Value Redis-compatible (NoSQL) / HTML5 / CSS3 / Bootstrap 5 / JavaScript / Fetch API / Chart.js / Git / GitHub / Render.
 
 ## Installation locale
 1. Importer `database/schema.sql` dans MySQL.
@@ -29,7 +29,7 @@ PHP 8 / MVC / PDO / MySQL ou TiDB Cloud / HTML5 / CSS3 / Bootstrap 5 / JavaScrip
 - administrateur : `admin@urbanfit.fr` / `STUDI2026`
 
 ## Déploiement Render + TiDB Cloud
-1. Créer un dépôt GitHub `ECF-URBANFIT` et pousser ce dossier.
+1. Utiliser le dépôt GitHub `ledapen/PENDAFITNESS` et pousser ce dossier.
 2. Importer `database/schema.sql` dans TiDB Cloud puis exécuter `database/create_demo_users.php` avec les variables TiDB.
 3. Créer un Web Service Render depuis GitHub. Le `Dockerfile` est fourni.
 4. Ajouter : `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_SSL=true`.

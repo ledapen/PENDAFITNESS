@@ -1,4 +1,5 @@
-# Dossier ECF - PENDAFITNESS
+# Dossier ECF — PENDAFITNESS
+
 ## 1. Analyse des besoins
 Application de réservation d'activités sportives. Acteurs : visiteur, membre, coach, administrateur. User stories, critères d'acceptation, RGPD et contraintes responsive.
 

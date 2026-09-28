@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ecf-urbanfit
+    name: pendafitness
     runtime: docker
     plan: free
     healthCheckPath: /
