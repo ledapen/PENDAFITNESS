@@ -1,1 +1,118 @@
-<?php class AuthController{function login(){if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();require_once __DIR__.'/../models/User.php';$u=User::byEmail(trim($_POST['email']??''));if($u&&password_verify($_POST['password']??'',$u['password'])){unset($u['password']);session_regenerate_id(true);$_SESSION['user']=$u;flash('success','Bienvenue '.$u['firstname'].' !');redirect($u['role']==='admin'?'/admin':($u['role']==='coach'?'/coach':'/'));}$error='Identifiants incorrects ou compte désactivé.';}view('auth/login',compact('error'));}function register(){if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();$email=trim($_POST['email']??'');if(!filter_var($email,FILTER_VALIDATE_EMAIL))$error='Adresse e-mail invalide.';elseif(strlen($_POST['password']??'')<8)$error='Le mot de passe doit contenir au moins 8 caractères.';elseif(empty(trim($_POST['firstname']??''))||empty(trim($_POST['lastname']??'')))$error='Nom et prénom obligatoires.';else{require_once __DIR__.'/../models/User.php';try{User::create($_POST);flash('success','Compte créé. Vous pouvez maintenant vous connecter.');redirect('/login');}catch(Throwable $e){$error='Cette adresse e-mail existe déjà.';}}}view('auth/register',compact('error'));}function logout(){session_destroy();session_start();flash('success','Vous êtes déconnecté.');redirect('/');}}
+<?php
+
+class AuthController
+{
+    public function login()
+    {
+        $error = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            check_csrf();
+
+            require_once __DIR__ . '/../models/User.php';
+
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            $u = User::byEmail($email);
+
+            if ($u && password_verify($password, $u['password'])) {
+                unset($u['password']);
+
+                session_regenerate_id(true);
+                $_SESSION['user'] = $u;
+
+                flash('success', 'Bienvenue ' . $u['firstname'] . ' !');
+
+                redirect(
+                    $u['role'] === 'admin'
+                        ? '/admin'
+                        : ($u['role'] === 'coach' ? '/coach' : '/')
+                );
+            }
+
+            $error = 'Identifiants incorrects ou compte désactivé.';
+        }
+
+        view('auth/login', compact('error'));
+    }
+
+    public function register()
+    {
+        $errors = [];
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            check_csrf();
+
+            $firstname = trim($_POST['firstname'] ?? '');
+            $lastname  = trim($_POST['lastname'] ?? '');
+            $email     = trim($_POST['email'] ?? '');
+            $phone     = trim($_POST['phone'] ?? '');
+            $city      = trim($_POST['city'] ?? '');
+            $password  = $_POST['password'] ?? '';
+
+            // Validation précise de chaque champ
+            if ($firstname === '') {
+                $errors['firstname'] = 'Le prénom est obligatoire.';
+            } elseif (mb_strlen($firstname) > 80) {
+                $errors['firstname'] = 'Le prénom ne doit pas dépasser 80 caractères.';
+            }
+
+            if ($lastname === '') {
+                $errors['lastname'] = 'Le nom est obligatoire.';
+            } elseif (mb_strlen($lastname) > 80) {
+                $errors['lastname'] = 'Le nom ne doit pas dépasser 80 caractères.';
+            }
+
+            if ($email === '') {
+                $errors['email'] = 'L’adresse e-mail est obligatoire.';
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors['email'] = 'Veuillez saisir une adresse e-mail valide.';
+            }
+
+            if ($phone !== '' && !preg_match('/^[0-9+\s().-]{6,30}$/', $phone)) {
+                $errors['phone'] = 'Veuillez saisir un numéro de téléphone valide.';
+            }
+
+            if (mb_strlen($city) > 120) {
+                $errors['city'] = 'La ville ne doit pas dépasser 120 caractères.';
+            }
+
+            if ($password === '') {
+                $errors['password'] = 'Le mot de passe est obligatoire.';
+            } elseif (strlen($password) < 8) {
+                $errors['password'] = 'Le mot de passe doit contenir au moins 8 caractères.';
+            }
+
+            // Création uniquement si tous les champs sont valides
+            if (empty($errors)) {
+                require_once __DIR__ . '/../models/User.php';
+
+                try {
+                    User::create($_POST);
+
+                    flash(
+                        'success',
+                        'Compte créé. Vous pouvez maintenant vous connecter.'
+                    );
+
+                    redirect('/login');
+                } catch (Throwable $e) {
+                    $errors['email'] = 'Cette adresse e-mail est déjà utilisée.';
+                }
+            }
+        }
+
+        view('auth/register', compact('errors'));
+    }
+
+    public function logout()
+    {
+        session_destroy();
+        session_start();
+
+        flash('success', 'Vous êtes déconnecté.');
+
+        redirect('/');
+    }
+}
