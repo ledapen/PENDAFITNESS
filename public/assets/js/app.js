@@ -70,11 +70,8 @@ document.addEventListener('click', function (event) {
 
     try {
 
-        // Récupération des données JSON de l'activité
         const activity = JSON.parse(btn.dataset.json);
 
-
-        // Champs texte et numériques
         const fields = [
             'id',
             'title',
@@ -85,7 +82,6 @@ document.addEventListener('click', function (event) {
             'location',
             'image_url'
         ];
-
 
         fields.forEach(name => {
 
@@ -99,7 +95,6 @@ document.addEventListener('click', function (event) {
         });
 
 
-        // Catégorie
         if (form.elements.category_id) {
 
             form.elements.category_id.value =
@@ -108,7 +103,6 @@ document.addEventListener('click', function (event) {
         }
 
 
-        // Niveau
         if (form.elements.level) {
 
             form.elements.level.value =
@@ -117,7 +111,6 @@ document.addEventListener('click', function (event) {
         }
 
 
-        // Activité mise à la une
         if (form.elements.featured) {
 
             form.elements.featured.checked =
@@ -126,7 +119,6 @@ document.addEventListener('click', function (event) {
         }
 
 
-        // Activité active / inactive
         if (form.elements.active) {
 
             form.elements.active.checked =
@@ -135,7 +127,6 @@ document.addEventListener('click', function (event) {
         }
 
 
-        // Remonte vers le formulaire
         form.scrollIntoView({
             behavior: 'smooth',
             block: 'start'
@@ -159,7 +150,7 @@ document.addEventListener('click', function (event) {
 // ------------------------------------------------------------
 
 if (
-    window.pendafitnessChart &&
+    Array.isArray(window.pendafitnessChart) &&
     document.getElementById('adminChart')
 ) {
 
@@ -170,86 +161,43 @@ if (
         window.innerWidth < 768;
 
 
-    /*
-     * Sur mobile, découpe les noms longs sur plusieurs lignes
-     * pour éviter que Chart.js masque certaines activités.
-     */
-    const formatMobileLabel = (label) => {
-
-        if (!isMobile) {
-            return label;
-        }
-
-        const words =
-            String(label).split(' ');
-
-        const lines = [];
-
-        let currentLine = '';
-
-
-        words.forEach(word => {
-
-            const testLine =
-                currentLine
-                    ? currentLine + ' ' + word
-                    : word;
-
-
-            if (
-                testLine.length > 14 &&
-                currentLine
-            ) {
-
-                lines.push(currentLine);
-
-                currentLine = word;
-
-            } else {
-
-                currentLine = testLine;
-
-            }
-
-        });
-
-
-        if (currentLine) {
-            lines.push(currentLine);
-        }
-
-
-        return lines;
-
-    };
-
-
-    // Tous les noms d'activités
-    const chartLabels =
+    const labels =
         window.pendafitnessChart.map(
-            item =>
-                formatMobileLabel(
-                    item.title
-                )
+            item => item.title
         );
 
 
-    // Nombre de réservations
-    const chartValues =
+    const values =
         window.pendafitnessChart.map(
-            item =>
-                Number(item.bookings)
+            item => Number(item.bookings)
         );
 
 
     /*
-     * Sur mobile, le graphique reçoit davantage
-     * de hauteur pour conserver tous les libellés.
+     * MOBILE
+     * --------------------------------------------------------
+     * Le graphique devient horizontal.
+     *
+     * Chaque activité dispose de sa propre ligne :
+     * aucun nom n'est supprimé et les libellés ne sont plus
+     * empilés les uns sur les autres.
      */
     if (isMobile) {
 
+        const height =
+            Math.max(
+                320,
+                labels.length * 55
+            );
+
+        chartCanvas.parentElement.style.height =
+            `${height}px`;
+
         chartCanvas.style.height =
-            '380px';
+            '100%';
+
+        chartCanvas.style.width =
+            '100%';
 
     }
 
@@ -260,16 +208,17 @@ if (
 
             type: 'bar',
 
+
             data: {
 
-                labels: chartLabels,
+                labels: labels,
 
                 datasets: [
                     {
 
                         label: 'Réservations',
 
-                        data: chartValues
+                        data: values
 
                     }
                 ]
@@ -279,10 +228,36 @@ if (
 
             options: {
 
+                /*
+                 * indexAxis = y :
+                 * les activités sont placées verticalement
+                 * sur téléphone.
+                 *
+                 * Sur ordinateur le graphique conserve
+                 * son affichage classique.
+                 */
+                indexAxis:
+                    isMobile
+                        ? 'y'
+                        : 'x',
+
+
                 responsive: true,
 
+
+                /*
+                 * Sur mobile, Chart.js utilise la hauteur
+                 * que nous avons définie ci-dessus.
+                 */
                 maintainAspectRatio:
                     !isMobile,
+
+
+                animation: {
+
+                    duration: 400
+
+                },
 
 
                 plugins: {
@@ -294,10 +269,6 @@ if (
                     },
 
 
-                    /*
-                     * Affiche le nom complet de l'activité
-                     * lorsque l'utilisateur touche une barre.
-                     */
                     tooltip: {
 
                         callbacks: {
@@ -320,9 +291,14 @@ if (
 
                             label: function (context) {
 
+                                const value =
+                                    isMobile
+                                        ? context.parsed.x
+                                        : context.parsed.y;
+
                                 return (
                                     'Réservations : ' +
-                                    context.parsed.y
+                                    value
                                 );
 
                             }
@@ -334,70 +310,114 @@ if (
                 },
 
 
-                scales: {
+                scales: isMobile
 
-                    x: {
+                    ? {
 
-                        ticks: {
+                        /*
+                         * MOBILE :
+                         * axe horizontal = nombre
+                         * de réservations.
+                         */
+                        x: {
 
-                            /*
-                             * IMPORTANT :
-                             * aucune activité ne doit être
-                             * automatiquement masquée.
-                             */
-                            autoSkip: false,
+                            beginAtZero: true,
 
+                            ticks: {
 
-                            maxRotation:
-                                isMobile
-                                    ? 0
-                                    : 25,
+                                precision: 0,
 
+                                stepSize: 1
 
-                            minRotation: 0,
+                            },
 
+                            title: {
 
-                            font: {
+                                display: true,
 
-                                size:
-                                    isMobile
-                                        ? 10
-                                        : 12
+                                text: 'Réservations'
 
                             }
 
                         },
 
 
-                        grid: {
+                        /*
+                         * MOBILE :
+                         * axe vertical = activités.
+                         */
+                        y: {
 
-                            display: false
+                            ticks: {
 
-                        }
+                                autoSkip: false,
 
-                    },
+                                font: {
 
+                                    size: 10
 
-                    y: {
+                                }
 
-                        beginAtZero: true,
+                            },
 
+                            grid: {
 
-                        ticks: {
+                                display: false
 
-                            /*
-                             * Les réservations sont des
-                             * nombres entiers.
-                             */
-                            precision: 0,
-
-                            stepSize: 1
+                            }
 
                         }
 
                     }
 
-                }
+                    : {
+
+                        /*
+                         * ORDINATEUR :
+                         * conservation du graphique vertical.
+                         */
+                        x: {
+
+                            ticks: {
+
+                                autoSkip: false,
+
+                                maxRotation: 25,
+
+                                minRotation: 0,
+
+                                font: {
+
+                                    size: 12
+
+                                }
+
+                            },
+
+                            grid: {
+
+                                display: false
+
+                            }
+
+                        },
+
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            ticks: {
+
+                                precision: 0,
+
+                                stepSize: 1
+
+                            }
+
+                        }
+
+                    }
 
             }
 
@@ -444,8 +464,7 @@ if (refreshBtn) {
             }
 
 
-            refreshBtn.disabled =
-                true;
+            refreshBtn.disabled = true;
 
 
             if (status) {
@@ -458,10 +477,6 @@ if (refreshBtn) {
 
             try {
 
-                /*
-                 * Requête asynchrone vers l'API
-                 * des séances de l'activité.
-                 */
                 const response =
                     await fetch(
                         `/api/activite/${encodeURIComponent(id)}/seances`,
@@ -494,10 +509,6 @@ if (refreshBtn) {
                     await response.json();
 
 
-                /*
-                 * Mise à jour du nombre de places
-                 * sans recharger toute la page.
-                 */
                 payload.sessions.forEach(
                     session => {
 
@@ -572,8 +583,7 @@ if (refreshBtn) {
 
             } finally {
 
-                refreshBtn.disabled =
-                    false;
+                refreshBtn.disabled = false;
 
             }
 
