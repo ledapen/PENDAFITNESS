@@ -4,29 +4,43 @@
 
 
 // ------------------------------------------------------------
-// 1. Afficher / masquer les mots de passe
+// 1. AFFICHER / MASQUER LES MOTS DE PASSE
 // ------------------------------------------------------------
 
 document.querySelectorAll('.password-toggle').forEach(btn => {
 
-    btn.setAttribute('aria-label', 'Afficher le mot de passe');
+    btn.setAttribute(
+        'aria-label',
+        'Afficher le mot de passe'
+    );
 
     btn.addEventListener('click', () => {
 
-        const input = document.getElementById(btn.dataset.target);
+        const input =
+            document.getElementById(
+                btn.dataset.target
+            );
 
-        if (!input) return;
+        if (!input) {
+            return;
+        }
 
-        const show = input.type === 'password';
+        const show =
+            input.type === 'password';
 
-        input.type = show ? 'text' : 'password';
+        input.type =
+            show ? 'text' : 'password';
 
-        const icon = btn.querySelector('i');
+        const icon =
+            btn.querySelector('i');
 
         if (icon) {
-            icon.className = show
-                ? 'bi bi-eye-slash'
-                : 'bi bi-eye';
+
+            icon.className =
+                show
+                    ? 'bi bi-eye-slash'
+                    : 'bi bi-eye';
+
         }
 
         btn.setAttribute(
@@ -42,120 +56,147 @@ document.querySelectorAll('.password-toggle').forEach(btn => {
 
 
 // ------------------------------------------------------------
-// 2. Modification d'une activité depuis l'espace coach
+// 2. MODIFICATION D'UNE ACTIVITÉ
 // ------------------------------------------------------------
 
-document.addEventListener('click', function (event) {
+document.addEventListener(
+    'click',
+    function (event) {
 
-    const btn = event.target.closest('.edit-activity');
+        const btn =
+            event.target.closest(
+                '.edit-activity'
+            );
 
-    if (!btn) {
-        return;
-    }
+        if (!btn) {
+            return;
+        }
 
-    event.preventDefault();
+        event.preventDefault();
 
-    const form = document.querySelector(
-        'form[action="/coach/activites/save"]'
-    );
+        const form =
+            document.querySelector(
+                'form[action="/coach/activites/save"]'
+            );
 
-    if (!form) {
+        if (!form) {
 
-        console.error(
-            'PENDAFITNESS : formulaire activité introuvable.'
-        );
+            console.error(
+                'PENDAFITNESS : formulaire activité introuvable.'
+            );
 
-        return;
-    }
+            return;
+        }
 
-    try {
+        try {
 
-        const activity = JSON.parse(btn.dataset.json);
+            const activity =
+                JSON.parse(
+                    btn.dataset.json
+                );
 
-        const fields = [
-            'id',
-            'title',
-            'short_description',
-            'description',
-            'price',
-            'duration_minutes',
-            'location',
-            'image_url'
-        ];
 
-        fields.forEach(name => {
+            const fields = [
 
-            if (form.elements[name]) {
+                'id',
+                'title',
+                'short_description',
+                'description',
+                'price',
+                'duration_minutes',
+                'location',
+                'image_url'
 
-                form.elements[name].value =
-                    activity[name] ?? '';
+            ];
+
+
+            fields.forEach(name => {
+
+                if (form.elements[name]) {
+
+                    form.elements[name].value =
+                        activity[name] ?? '';
+
+                }
+
+            });
+
+
+            if (form.elements.category_id) {
+
+                form.elements.category_id.value =
+                    activity.category_id ?? '';
 
             }
 
-        });
+
+            if (form.elements.level) {
+
+                form.elements.level.value =
+                    activity.level ?? '';
+
+            }
 
 
-        if (form.elements.category_id) {
+            if (form.elements.featured) {
 
-            form.elements.category_id.value =
-                activity.category_id ?? '';
+                form.elements.featured.checked =
+                    Number(
+                        activity.featured
+                    ) === 1;
+
+            }
+
+
+            if (form.elements.active) {
+
+                form.elements.active.checked =
+                    Number(
+                        activity.active
+                    ) === 1;
+
+            }
+
+
+            form.scrollIntoView({
+
+                behavior: 'smooth',
+                block: 'start'
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                'PENDAFITNESS - erreur modification activité :',
+                error
+            );
 
         }
-
-
-        if (form.elements.level) {
-
-            form.elements.level.value =
-                activity.level ?? '';
-
-        }
-
-
-        if (form.elements.featured) {
-
-            form.elements.featured.checked =
-                Number(activity.featured) === 1;
-
-        }
-
-
-        if (form.elements.active) {
-
-            form.elements.active.checked =
-                Number(activity.active) === 1;
-
-        }
-
-
-        form.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            'PENDAFITNESS - erreur modification activité :',
-            error
-        );
 
     }
-
-});
+);
 
 
 // ------------------------------------------------------------
-// 3. Graphique du tableau de bord administrateur
+// 3. GRAPHIQUE DU TABLEAU DE BORD ADMINISTRATEUR
 // ------------------------------------------------------------
 
 if (
-    Array.isArray(window.pendafitnessChart) &&
-    document.getElementById('adminChart')
+    Array.isArray(
+        window.pendafitnessChart
+    ) &&
+    document.getElementById(
+        'adminChart'
+    )
 ) {
 
     const chartCanvas =
-        document.getElementById('adminChart');
+        document.getElementById(
+            'adminChart'
+        );
+
 
     const isMobile =
         window.innerWidth < 768;
@@ -169,32 +210,30 @@ if (
 
     const values =
         window.pendafitnessChart.map(
-            item => Number(item.bookings)
+            item => Number(
+                item.bookings
+            )
         );
 
 
     /*
-     * MOBILE
-     * --------------------------------------------------------
-     * Le graphique devient horizontal.
+     * Même graphique vertical
+     * sur ordinateur et téléphone.
      *
-     * Chaque activité dispose de sa propre ligne :
-     * aucun nom n'est supprimé et les libellés ne sont plus
-     * empilés les uns sur les autres.
+     * On ne change PAS indexAxis.
      */
     if (isMobile) {
 
-        const height =
-            Math.max(
-                320,
-                labels.length * 55
-            );
-
-        chartCanvas.parentElement.style.height =
-            `${height}px`;
-
+        /*
+         * Hauteur raisonnable.
+         * On évite le graphique très long
+         * et les redimensionnements excessifs.
+         */
         chartCanvas.style.height =
-            '100%';
+            '260px';
+
+        chartCanvas.style.maxHeight =
+            '260px';
 
         chartCanvas.style.width =
             '100%';
@@ -213,12 +252,15 @@ if (
 
                 labels: labels,
 
+
                 datasets: [
                     {
 
-                        label: 'Réservations',
+                        label:
+                            'Réservations',
 
-                        data: values
+                        data:
+                            values
 
                     }
                 ]
@@ -228,26 +270,12 @@ if (
 
             options: {
 
-                /*
-                 * indexAxis = y :
-                 * les activités sont placées verticalement
-                 * sur téléphone.
-                 *
-                 * Sur ordinateur le graphique conserve
-                 * son affichage classique.
-                 */
-                indexAxis:
-                    isMobile
-                        ? 'y'
-                        : 'x',
-
-
                 responsive: true,
 
 
                 /*
-                 * Sur mobile, Chart.js utilise la hauteur
-                 * que nous avons définie ci-dessus.
+                 * Sur téléphone nous utilisons
+                 * la hauteur définie plus haut.
                  */
                 maintainAspectRatio:
                     !isMobile,
@@ -255,13 +283,18 @@ if (
 
                 animation: {
 
-                    duration: 400
+                    duration: 300
 
                 },
 
 
                 plugins: {
 
+                    /*
+                     * Pas besoin de légende :
+                     * le titre indique déjà
+                     * qu'il s'agit des réservations.
+                     */
                     legend: {
 
                         display: false
@@ -269,39 +302,49 @@ if (
                     },
 
 
+                    /*
+                     * Au toucher d'une barre,
+                     * affichage du nom complet
+                     * de l'activité.
+                     */
                     tooltip: {
 
                         callbacks: {
 
-                            title: function (items) {
+                            title:
+                                function (
+                                    items
+                                ) {
 
-                                if (!items.length) {
-                                    return '';
+                                    if (
+                                        !items.length
+                                    ) {
+
+                                        return '';
+
+                                    }
+
+                                    return labels[
+                                        items[0]
+                                            .dataIndex
+                                    ];
+
+                                },
+
+
+                            label:
+                                function (
+                                    context
+                                ) {
+
+                                    return (
+                                        'Réservations : ' +
+                                        context
+                                            .parsed
+                                            .y
+                                    );
+
                                 }
-
-                                const index =
-                                    items[0].dataIndex;
-
-                                return window
-                                    .pendafitnessChart[index]
-                                    .title;
-
-                            },
-
-
-                            label: function (context) {
-
-                                const value =
-                                    isMobile
-                                        ? context.parsed.x
-                                        : context.parsed.y;
-
-                                return (
-                                    'Réservations : ' +
-                                    value
-                                );
-
-                            }
 
                         }
 
@@ -310,59 +353,95 @@ if (
                 },
 
 
-                scales: isMobile
+                scales: {
 
-                    ? {
+                    /*
+                     * AXE DES ACTIVITÉS
+                     */
+                    x: {
 
-                        /*
-                         * MOBILE :
-                         * axe horizontal = nombre
-                         * de réservations.
-                         */
-                        x: {
+                        grid: {
 
-                            beginAtZero: true,
-
-                            ticks: {
-
-                                precision: 0,
-
-                                stepSize: 1
-
-                            },
-
-                            title: {
-
-                                display: true,
-
-                                text: 'Réservations'
-
-                            }
+                            display: false
 
                         },
 
 
-                        /*
-                         * MOBILE :
-                         * axe vertical = activités.
-                         */
-                        y: {
+                        ticks: {
 
-                            ticks: {
+                            /*
+                             * IMPORTANT :
+                             * aucune activité
+                             * n'est supprimée.
+                             */
+                            autoSkip: false,
 
-                                autoSkip: false,
 
-                                font: {
+                            /*
+                             * Sur téléphone,
+                             * les intitulés sont
+                             * inclinés pour pouvoir
+                             * conserver les 7 activités.
+                             */
+                            minRotation:
+                                isMobile
+                                    ? 55
+                                    : 0,
 
-                                    size: 10
 
-                                }
+                            maxRotation:
+                                isMobile
+                                    ? 55
+                                    : 25,
+
+
+                            font: {
+
+                                size:
+                                    isMobile
+                                        ? 7
+                                        : 12
 
                             },
 
-                            grid: {
 
-                                display: false
+                            padding:
+                                isMobile
+                                    ? 2
+                                    : 4
+
+                        }
+
+                    },
+
+
+                    /*
+                     * AXE DU NOMBRE
+                     * DE RÉSERVATIONS
+                     */
+                    y: {
+
+                        beginAtZero: true,
+
+
+                        ticks: {
+
+                            /*
+                             * Pas de 1,5 ou 2,5 :
+                             * une réservation est
+                             * toujours un entier.
+                             */
+                            precision: 0,
+
+                            stepSize: 1,
+
+
+                            font: {
+
+                                size:
+                                    isMobile
+                                        ? 9
+                                        : 12
 
                             }
 
@@ -370,54 +449,7 @@ if (
 
                     }
 
-                    : {
-
-                        /*
-                         * ORDINATEUR :
-                         * conservation du graphique vertical.
-                         */
-                        x: {
-
-                            ticks: {
-
-                                autoSkip: false,
-
-                                maxRotation: 25,
-
-                                minRotation: 0,
-
-                                font: {
-
-                                    size: 12
-
-                                }
-
-                            },
-
-                            grid: {
-
-                                display: false
-
-                            }
-
-                        },
-
-
-                        y: {
-
-                            beginAtZero: true,
-
-                            ticks: {
-
-                                precision: 0,
-
-                                stepSize: 1
-
-                            }
-
-                        }
-
-                    }
+                }
 
             }
 
@@ -428,7 +460,7 @@ if (
 
 
 // ------------------------------------------------------------
-// 4. Actualisation asynchrone des places disponibles
+// 4. ACTUALISATION ASYNCHRONE DES PLACES DISPONIBLES
 // ------------------------------------------------------------
 
 const refreshBtn =
@@ -464,7 +496,8 @@ if (refreshBtn) {
             }
 
 
-            refreshBtn.disabled = true;
+            refreshBtn.disabled =
+                true;
 
 
             if (status) {
@@ -518,30 +551,31 @@ if (refreshBtn) {
                             );
 
 
-                        if (el) {
-
-                            const remaining =
-                                Number(
-                                    session.remaining
-                                );
-
-
-                            el.textContent =
-                                `${remaining} places`;
-
-
-                            el.classList.toggle(
-                                'text-danger',
-                                remaining <= 3
-                            );
-
-
-                            el.classList.toggle(
-                                'text-success',
-                                remaining > 3
-                            );
-
+                        if (!el) {
+                            return;
                         }
+
+
+                        const remaining =
+                            Number(
+                                session.remaining
+                            );
+
+
+                        el.textContent =
+                            `${remaining} places`;
+
+
+                        el.classList.toggle(
+                            'text-danger',
+                            remaining <= 3
+                        );
+
+
+                        el.classList.toggle(
+                            'text-success',
+                            remaining > 3
+                        );
 
                     }
                 );
@@ -555,9 +589,16 @@ if (refreshBtn) {
                                 .toLocaleTimeString(
                                     'fr-FR',
                                     {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        second: '2-digit'
+
+                                        hour:
+                                            '2-digit',
+
+                                        minute:
+                                            '2-digit',
+
+                                        second:
+                                            '2-digit'
+
                                     }
                                 )
                         }.`;
@@ -583,7 +624,8 @@ if (refreshBtn) {
 
             } finally {
 
-                refreshBtn.disabled = false;
+                refreshBtn.disabled =
+                    false;
 
             }
 
