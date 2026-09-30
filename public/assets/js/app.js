@@ -15,7 +15,9 @@ document.querySelectorAll('.password-toggle').forEach(btn => {
 
         const input = document.getElementById(btn.dataset.target);
 
-        if (!input) return;
+        if (!input) {
+            return;
+        }
 
         const show = input.type === 'password';
 
@@ -35,7 +37,9 @@ document.querySelectorAll('.password-toggle').forEach(btn => {
                 ? 'Masquer le mot de passe'
                 : 'Afficher le mot de passe'
         );
+
     });
+
 });
 
 
@@ -47,7 +51,9 @@ document.addEventListener('click', function (event) {
 
     const btn = event.target.closest('.edit-activity');
 
-    if (!btn) return;
+    if (!btn) {
+        return;
+    }
 
     event.preventDefault();
 
@@ -56,9 +62,11 @@ document.addEventListener('click', function (event) {
     );
 
     if (!form) {
+
         console.error(
             'PENDAFITNESS : formulaire activité introuvable.'
         );
+
         return;
     }
 
@@ -80,36 +88,52 @@ document.addEventListener('click', function (event) {
         fields.forEach(name => {
 
             if (form.elements[name]) {
+
                 form.elements[name].value =
                     activity[name] ?? '';
+
             }
 
         });
 
+
         if (form.elements.category_id) {
+
             form.elements.category_id.value =
                 activity.category_id ?? '';
+
         }
+
 
         if (form.elements.level) {
+
             form.elements.level.value =
                 activity.level ?? '';
+
         }
+
 
         if (form.elements.featured) {
+
             form.elements.featured.checked =
                 Number(activity.featured) === 1;
+
         }
 
+
         if (form.elements.active) {
+
             form.elements.active.checked =
                 Number(activity.active) === 1;
+
         }
+
 
         form.scrollIntoView({
             behavior: 'smooth',
             block: 'start'
         });
+
 
     } catch (error) {
 
@@ -117,13 +141,14 @@ document.addEventListener('click', function (event) {
             'PENDAFITNESS - erreur modification activité :',
             error
         );
+
     }
+
 });
 
 
 // ------------------------------------------------------------
-// 3. GRAPHIQUE ADMIN
-// Même structure ordinateur / téléphone
+// 3. GRAPHIQUE DU TABLEAU DE BORD ADMINISTRATEUR
 // ------------------------------------------------------------
 
 if (
@@ -134,13 +159,16 @@ if (
     const canvas =
         document.getElementById('adminChart');
 
+
     const isMobile =
         window.innerWidth < 768;
+
 
     const labels =
         window.pendafitnessChart.map(
             item => item.title
         );
+
 
     const values =
         window.pendafitnessChart.map(
@@ -148,43 +176,81 @@ if (
         );
 
 
-    // Taille stable sur téléphone
+    // --------------------------------------------------------
+    // Taille du graphique sur téléphone
+    // --------------------------------------------------------
+
     if (isMobile) {
 
         canvas.style.width = '100%';
+
         canvas.style.height = '280px';
+
         canvas.style.maxHeight = '280px';
 
     }
 
 
+    // --------------------------------------------------------
+    // Création du graphique
+    // --------------------------------------------------------
+
     new Chart(canvas, {
 
         type: 'bar',
+
 
         data: {
 
             labels: labels,
 
+
             datasets: [{
+
                 label: 'Réservations',
-                data: values
+
+                data: values,
+
+                /*
+                 * La barre ne remplit pas toute la case.
+                 * Elle reste bien au centre.
+                 */
+                categoryPercentage: 0.72,
+
+                barPercentage: 0.72
+
             }]
+
         },
+
 
         options: {
 
             responsive: true,
 
+
+            /*
+             * Sur mobile, la hauteur définie plus haut
+             * est utilisée.
+             */
             maintainAspectRatio: !isMobile,
 
+
+            /*
+             * Évite les mouvements du graphique
+             * pendant son affichage.
+             */
             animation: false,
+
 
             plugins: {
 
                 legend: {
+
                     display: false
+
                 },
+
 
                 tooltip: {
 
@@ -199,7 +265,9 @@ if (
                             return labels[
                                 items[0].dataIndex
                             ];
+
                         },
+
 
                         label: function (context) {
 
@@ -207,75 +275,151 @@ if (
                                 'Réservations : ' +
                                 context.parsed.y
                             );
+
                         }
+
                     }
+
                 }
+
             },
 
 
             scales: {
 
-                // ---------------------------------------------
-                // AXE X : ACTIVITÉS + TRAITS VERTICAUX
-                // ---------------------------------------------
+
+                // =================================================
+                // AXE X
+                //
+                // Une activité = une case.
+                // Les traits verticaux délimitent les cases.
+                // La barre et le nom sont centrés dans la case.
+                // =================================================
 
                 x: {
 
+                    /*
+                     * Centre les catégories entre
+                     * deux lignes de grille.
+                     */
                     offset: true,
+
 
                     grid: {
 
+                        /*
+                         * Affiche les traits verticaux.
+                         */
                         display: true,
 
                         drawOnChartArea: true,
 
                         drawTicks: true,
 
-                        offset: false
+
+                        /*
+                         * TRÈS IMPORTANT :
+                         * les lignes sont placées entre
+                         * les catégories et non au milieu
+                         * des barres.
+                         */
+                        offset: true
 
                     },
+
 
                     ticks: {
 
                         display: true,
 
+
+                        /*
+                         * Les 7 activités doivent rester
+                         * affichées.
+                         */
                         autoSkip: false,
 
+
+                        /*
+                         * Chaque nom est centré sous
+                         * la case correspondante.
+                         */
+                        align: 'center',
+
+
+                        /*
+                         * Sur téléphone les textes sont
+                         * inclinés pour tenir dans la largeur.
+                         */
                         minRotation:
-                            isMobile ? 55 : 0,
+                            isMobile
+                                ? 55
+                                : 0,
+
 
                         maxRotation:
-                            isMobile ? 55 : 25,
+                            isMobile
+                                ? 55
+                                : 25,
+
 
                         font: {
 
                             size:
-                                isMobile ? 7 : 12
+                                isMobile
+                                    ? 7
+                                    : 12
+
                         },
 
-                        padding: 3
+
+                        padding: 4
+
                     }
+
                 },
 
 
-                // ---------------------------------------------
-                // AXE Y : 0 → 4 PAR PAS DE 0,5
-                // ---------------------------------------------
+                // =================================================
+                // AXE Y
+                //
+                // 0,0
+                // 0,5
+                // 1,0
+                // 1,5
+                // 2,0
+                // 2,5
+                // 3,0
+                // 3,5
+                // 4,0
+                // =================================================
 
                 y: {
 
                     type: 'linear',
 
+
                     beginAtZero: true,
 
+
+                    /*
+                     * Même échelle que le graphique
+                     * de référence.
+                     */
                     min: 0,
 
                     max: 4,
 
+
                     bounds: 'ticks',
+
 
                     grid: {
 
+                        /*
+                         * Affiche toutes les lignes
+                         * horizontales.
+                         */
                         display: true,
 
                         drawOnChartArea: true,
@@ -286,153 +430,231 @@ if (
 
                     },
 
+
                     ticks: {
 
                         display: true,
 
+
+                        /*
+                         * Empêche Chart.js de supprimer
+                         * certaines graduations sur mobile.
+                         */
                         autoSkip: false,
 
-                        min: 0,
 
-                        max: 4,
-
+                        /*
+                         * Une graduation tous les 0,5.
+                         */
                         stepSize: 0.5,
 
+
                         precision: 1,
+
 
                         font: {
 
                             size:
-                                isMobile ? 9 : 12
+                                isMobile
+                                    ? 9
+                                    : 12
+
                         },
 
+
+                        /*
+                         * Format :
+                         *
+                         * 0,0
+                         * 0,5
+                         * 1,0
+                         * 1,5
+                         * ...
+                         * 4,0
+                         */
                         callback: function (value) {
 
                             return Number(value)
                                 .toFixed(1)
                                 .replace('.', ',');
+
                         }
+
                     }
+
                 }
+
             }
+
         }
+
     });
+
 }
 
 
 // ------------------------------------------------------------
-// 4. ACTUALISATION ASYNCHRONE DES PLACES
+// 4. ACTUALISATION ASYNCHRONE DES PLACES DISPONIBLES
 // ------------------------------------------------------------
 
 const refreshBtn =
-    document.getElementById('refresh-sessions');
+    document.getElementById(
+        'refresh-sessions'
+    );
 
 
 if (refreshBtn) {
 
-    refreshBtn.addEventListener('click', async () => {
+    refreshBtn.addEventListener(
+        'click',
+        async () => {
 
-        const box =
-            refreshBtn.closest(
-                '[data-activity-id]'
-            );
+            const box =
+                refreshBtn.closest(
+                    '[data-activity-id]'
+                );
 
-        const status =
-            document.getElementById(
-                'sessions-status'
-            );
 
-        const id =
-            box?.dataset.activityId;
+            const status =
+                document.getElementById(
+                    'sessions-status'
+                );
 
-        if (!id) return;
 
-        refreshBtn.disabled = true;
+            const id =
+                box?.dataset.activityId;
 
-        if (status) {
-            status.textContent =
-                'Actualisation en cours…';
-        }
 
-        try {
+            if (!id) {
+                return;
+            }
 
-            const response =
-                await fetch(
-                    `/api/activite/${encodeURIComponent(id)}/seances`,
-                    {
-                        headers: {
-                            Accept: 'application/json'
-                        },
-                        cache: 'no-store'
+
+            refreshBtn.disabled = true;
+
+
+            if (status) {
+
+                status.textContent =
+                    'Actualisation en cours…';
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/activite/${encodeURIComponent(id)}/seances`,
+                        {
+
+                            headers: {
+
+                                Accept:
+                                    'application/json'
+
+                            },
+
+                            cache:
+                                'no-store'
+
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `HTTP ${response.status}`
+                    );
+
+                }
+
+
+                const payload =
+                    await response.json();
+
+
+                payload.sessions.forEach(
+                    session => {
+
+                        const el =
+                            document.querySelector(
+                                `[data-session-remaining="${session.id}"]`
+                            );
+
+
+                        if (!el) {
+                            return;
+                        }
+
+
+                        const remaining =
+                            Number(
+                                session.remaining
+                            );
+
+
+                        el.textContent =
+                            `${remaining} places`;
+
+
+                        el.classList.toggle(
+                            'text-danger',
+                            remaining <= 3
+                        );
+
+
+                        el.classList.toggle(
+                            'text-success',
+                            remaining > 3
+                        );
+
                     }
                 );
 
-            if (!response.ok) {
-                throw new Error(
-                    `HTTP ${response.status}`
+
+                if (status) {
+
+                    status.textContent =
+                        `Disponibilités actualisées à ${
+                            new Date()
+                                .toLocaleTimeString(
+                                    'fr-FR',
+                                    {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        second: '2-digit'
+                                    }
+                                )
+                        }.`;
+
+                }
+
+
+            } catch (error) {
+
+                if (status) {
+
+                    status.textContent =
+                        'Impossible d’actualiser les places. Réessayez dans un instant.';
+
+                }
+
+
+                console.error(
+                    'PENDAFITNESS sessions fetch',
+                    error
                 );
+
+
+            } finally {
+
+                refreshBtn.disabled = false;
+
             }
 
-            const payload =
-                await response.json();
-
-            payload.sessions.forEach(session => {
-
-                const el =
-                    document.querySelector(
-                        `[data-session-remaining="${session.id}"]`
-                    );
-
-                if (!el) return;
-
-                const remaining =
-                    Number(session.remaining);
-
-                el.textContent =
-                    `${remaining} places`;
-
-                el.classList.toggle(
-                    'text-danger',
-                    remaining <= 3
-                );
-
-                el.classList.toggle(
-                    'text-success',
-                    remaining > 3
-                );
-            });
-
-
-            if (status) {
-
-                status.textContent =
-                    `Disponibilités actualisées à ${
-                        new Date().toLocaleTimeString(
-                            'fr-FR',
-                            {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit'
-                            }
-                        )
-                    }.`;
-            }
-
-        } catch (error) {
-
-            if (status) {
-                status.textContent =
-                    'Impossible d’actualiser les places. Réessayez dans un instant.';
-            }
-
-            console.error(
-                'PENDAFITNESS sessions fetch',
-                error
-            );
-
-        } finally {
-
-            refreshBtn.disabled = false;
         }
-    });
+    );
+
 }
