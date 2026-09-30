@@ -43,98 +43,101 @@ document.querySelectorAll('.password-toggle').forEach(btn => {
 // 2. Modification d'une activité depuis l'espace coach
 // ------------------------------------------------------------
 
-document.querySelectorAll('.edit-activity').forEach(btn => {
+document.addEventListener('click', function (event) {
 
-    btn.addEventListener('click', () => {
+    const btn = event.target.closest('.edit-activity');
 
-        // Recherche du formulaire de création / modification
-        const form = document.querySelector(
-            'form[action="/coach/activites/save"]'
+    if (!btn) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const form = document.querySelector(
+        'form[action="/coach/activites/save"]'
+    );
+
+    if (!form) {
+        console.error(
+            'PENDAFITNESS : formulaire activité introuvable.'
+        );
+        return;
+    }
+
+    try {
+
+        // Récupération des données JSON stockées dans le bouton
+        const activity = JSON.parse(btn.dataset.json);
+
+        // Remplissage des champs principaux
+        const fields = [
+            'id',
+            'title',
+            'short_description',
+            'description',
+            'price',
+            'duration_minutes',
+            'location',
+            'image_url'
+        ];
+
+        fields.forEach(name => {
+
+            if (form.elements[name]) {
+                form.elements[name].value =
+                    activity[name] ?? '';
+            }
+
+        });
+
+
+        // Catégorie
+        if (form.elements.category_id) {
+            form.elements.category_id.value =
+                activity.category_id ?? '';
+        }
+
+
+        // Niveau
+        if (form.elements.level) {
+            form.elements.level.value =
+                activity.level ?? '';
+        }
+
+
+        // Activité mise à la une
+        if (form.elements.featured) {
+
+            form.elements.featured.checked =
+                Number(activity.featured) === 1;
+
+        }
+
+
+        // Activité active / inactive
+        if (form.elements.active) {
+
+            form.elements.active.checked =
+                Number(activity.active) === 1;
+
+        }
+
+
+        // Remonter automatiquement vers le formulaire
+        form.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            'PENDAFITNESS - erreur modification activité :',
+            error
         );
 
-        if (!form) {
-            console.error(
-                'PENDAFITNESS : formulaire activité introuvable.'
-            );
-            return;
-        }
-
-        try {
-
-            // Le bouton contient toutes les informations
-            // de l'activité dans son attribut data-json
-            const activity = JSON.parse(btn.dataset.json);
-
-            // Champs texte et numériques
-            const fields = [
-                'id',
-                'title',
-                'short_description',
-                'description',
-                'price',
-                'duration_minutes',
-                'location',
-                'image_url'
-            ];
-
-            fields.forEach(name => {
-
-                if (form.elements[name]) {
-                    form.elements[name].value =
-                        activity[name] ?? '';
-                }
-
-            });
-
-
-            // Catégorie
-            if (form.elements.category_id) {
-                form.elements.category_id.value =
-                    activity.category_id ?? '';
-            }
-
-
-            // Niveau
-            if (form.elements.level) {
-                form.elements.level.value =
-                    activity.level ?? '';
-            }
-
-
-            // Activité mise à la une
-            if (form.elements.featured) {
-
-                form.elements.featured.checked =
-                    Number(activity.featured) === 1;
-
-            }
-
-
-            // Activité active / inactive
-            if (form.elements.active) {
-
-                form.elements.active.checked =
-                    Number(activity.active) === 1;
-
-            }
-
-
-            // Remonte automatiquement vers le formulaire
-            form.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-
-        } catch (error) {
-
-            console.error(
-                'PENDAFITNESS - erreur modification activité :',
-                error
-            );
-
-        }
-
-    });
+    }
 
 });
 
@@ -168,6 +171,7 @@ if (
                         )
                     }
                 ]
+
             },
 
             options: {
@@ -226,10 +230,13 @@ if (refreshBtn) {
                 box?.dataset.activityId;
 
 
-            if (!id) return;
+            if (!id) {
+                return;
+            }
 
 
             refreshBtn.disabled = true;
+
 
             if (status) {
                 status.textContent =
