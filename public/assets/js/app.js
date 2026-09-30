@@ -9,38 +9,24 @@
 
 document.querySelectorAll('.password-toggle').forEach(btn => {
 
-    btn.setAttribute(
-        'aria-label',
-        'Afficher le mot de passe'
-    );
+    btn.setAttribute('aria-label', 'Afficher le mot de passe');
 
     btn.addEventListener('click', () => {
 
-        const input =
-            document.getElementById(
-                btn.dataset.target
-            );
+        const input = document.getElementById(btn.dataset.target);
 
-        if (!input) {
-            return;
-        }
+        if (!input) return;
 
-        const show =
-            input.type === 'password';
+        const show = input.type === 'password';
 
-        input.type =
-            show ? 'text' : 'password';
+        input.type = show ? 'text' : 'password';
 
-        const icon =
-            btn.querySelector('i');
+        const icon = btn.querySelector('i');
 
         if (icon) {
-
-            icon.className =
-                show
-                    ? 'bi bi-eye-slash'
-                    : 'bi bi-eye';
-
+            icon.className = show
+                ? 'bi bi-eye-slash'
+                : 'bi bi-eye';
         }
 
         btn.setAttribute(
@@ -49,9 +35,7 @@ document.querySelectorAll('.password-toggle').forEach(btn => {
                 ? 'Masquer le mot de passe'
                 : 'Afficher le mot de passe'
         );
-
     });
-
 });
 
 
@@ -59,577 +43,396 @@ document.querySelectorAll('.password-toggle').forEach(btn => {
 // 2. MODIFICATION D'UNE ACTIVITÉ
 // ------------------------------------------------------------
 
-document.addEventListener(
-    'click',
-    function (event) {
+document.addEventListener('click', function (event) {
 
-        const btn =
-            event.target.closest(
-                '.edit-activity'
-            );
+    const btn = event.target.closest('.edit-activity');
 
-        if (!btn) {
-            return;
-        }
+    if (!btn) return;
 
-        event.preventDefault();
+    event.preventDefault();
 
-        const form =
-            document.querySelector(
-                'form[action="/coach/activites/save"]'
-            );
+    const form = document.querySelector(
+        'form[action="/coach/activites/save"]'
+    );
 
-        if (!form) {
-
-            console.error(
-                'PENDAFITNESS : formulaire activité introuvable.'
-            );
-
-            return;
-        }
-
-        try {
-
-            const activity =
-                JSON.parse(
-                    btn.dataset.json
-                );
-
-
-            const fields = [
-
-                'id',
-                'title',
-                'short_description',
-                'description',
-                'price',
-                'duration_minutes',
-                'location',
-                'image_url'
-
-            ];
-
-
-            fields.forEach(name => {
-
-                if (form.elements[name]) {
-
-                    form.elements[name].value =
-                        activity[name] ?? '';
-
-                }
-
-            });
-
-
-            if (form.elements.category_id) {
-
-                form.elements.category_id.value =
-                    activity.category_id ?? '';
-
-            }
-
-
-            if (form.elements.level) {
-
-                form.elements.level.value =
-                    activity.level ?? '';
-
-            }
-
-
-            if (form.elements.featured) {
-
-                form.elements.featured.checked =
-                    Number(
-                        activity.featured
-                    ) === 1;
-
-            }
-
-
-            if (form.elements.active) {
-
-                form.elements.active.checked =
-                    Number(
-                        activity.active
-                    ) === 1;
-
-            }
-
-
-            form.scrollIntoView({
-
-                behavior: 'smooth',
-                block: 'start'
-
-            });
-
-
-        } catch (error) {
-
-            console.error(
-                'PENDAFITNESS - erreur modification activité :',
-                error
-            );
-
-        }
-
+    if (!form) {
+        console.error(
+            'PENDAFITNESS : formulaire activité introuvable.'
+        );
+        return;
     }
-);
+
+    try {
+
+        const activity = JSON.parse(btn.dataset.json);
+
+        const fields = [
+            'id',
+            'title',
+            'short_description',
+            'description',
+            'price',
+            'duration_minutes',
+            'location',
+            'image_url'
+        ];
+
+        fields.forEach(name => {
+
+            if (form.elements[name]) {
+                form.elements[name].value =
+                    activity[name] ?? '';
+            }
+
+        });
+
+        if (form.elements.category_id) {
+            form.elements.category_id.value =
+                activity.category_id ?? '';
+        }
+
+        if (form.elements.level) {
+            form.elements.level.value =
+                activity.level ?? '';
+        }
+
+        if (form.elements.featured) {
+            form.elements.featured.checked =
+                Number(activity.featured) === 1;
+        }
+
+        if (form.elements.active) {
+            form.elements.active.checked =
+                Number(activity.active) === 1;
+        }
+
+        form.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+
+    } catch (error) {
+
+        console.error(
+            'PENDAFITNESS - erreur modification activité :',
+            error
+        );
+    }
+});
 
 
 // ------------------------------------------------------------
-// 3. GRAPHIQUE DU TABLEAU DE BORD ADMINISTRATEUR
+// 3. GRAPHIQUE ADMIN
+// Même structure ordinateur / téléphone
 // ------------------------------------------------------------
 
 if (
-    Array.isArray(
-        window.pendafitnessChart
-    ) &&
-    document.getElementById(
-        'adminChart'
-    )
+    Array.isArray(window.pendafitnessChart) &&
+    document.getElementById('adminChart')
 ) {
 
-    const chartCanvas =
-        document.getElementById(
-            'adminChart'
-        );
-
+    const canvas =
+        document.getElementById('adminChart');
 
     const isMobile =
         window.innerWidth < 768;
-
 
     const labels =
         window.pendafitnessChart.map(
             item => item.title
         );
 
-
     const values =
         window.pendafitnessChart.map(
-            item => Number(
-                item.bookings
-            )
+            item => Number(item.bookings)
         );
 
 
-    /*
-     * Même graphique vertical
-     * sur ordinateur et téléphone.
-     *
-     * On ne change PAS indexAxis.
-     */
+    // Taille stable sur téléphone
     if (isMobile) {
 
-        /*
-         * Hauteur raisonnable.
-         * On évite le graphique très long
-         * et les redimensionnements excessifs.
-         */
-        chartCanvas.style.height =
-            '260px';
-
-        chartCanvas.style.maxHeight =
-            '260px';
-
-        chartCanvas.style.width =
-            '100%';
+        canvas.style.width = '100%';
+        canvas.style.height = '280px';
+        canvas.style.maxHeight = '280px';
 
     }
 
 
-    new Chart(
-        chartCanvas,
-        {
+    new Chart(canvas, {
 
-            type: 'bar',
+        type: 'bar',
 
+        data: {
 
-            data: {
+            labels: labels,
 
-                labels: labels,
+            datasets: [{
+                label: 'Réservations',
+                data: values
+            }]
+        },
 
+        options: {
 
-                datasets: [
-                    {
+            responsive: true,
 
-                        label:
-                            'Réservations',
+            maintainAspectRatio: !isMobile,
 
-                        data:
-                            values
+            animation: false,
 
+            plugins: {
+
+                legend: {
+                    display: false
+                },
+
+                tooltip: {
+
+                    callbacks: {
+
+                        title: function (items) {
+
+                            if (!items.length) {
+                                return '';
+                            }
+
+                            return labels[
+                                items[0].dataIndex
+                            ];
+                        },
+
+                        label: function (context) {
+
+                            return (
+                                'Réservations : ' +
+                                context.parsed.y
+                            );
+                        }
                     }
-                ]
-
+                }
             },
 
 
-            options: {
+            scales: {
 
-                responsive: true,
+                // ---------------------------------------------
+                // AXE X : ACTIVITÉS + TRAITS VERTICAUX
+                // ---------------------------------------------
 
+                x: {
 
-                /*
-                 * Sur téléphone nous utilisons
-                 * la hauteur définie plus haut.
-                 */
-                maintainAspectRatio:
-                    !isMobile,
+                    offset: true,
 
+                    grid: {
 
-                animation: {
+                        display: true,
 
-                    duration: 300
+                        drawOnChartArea: true,
 
-                },
+                        drawTicks: true,
 
-
-                plugins: {
-
-                    /*
-                     * Pas besoin de légende :
-                     * le titre indique déjà
-                     * qu'il s'agit des réservations.
-                     */
-                    legend: {
-
-                        display: false
+                        offset: false
 
                     },
 
+                    ticks: {
 
-                    /*
-                     * Au toucher d'une barre,
-                     * affichage du nom complet
-                     * de l'activité.
-                     */
-                    tooltip: {
+                        display: true,
 
-                        callbacks: {
+                        autoSkip: false,
 
-                            title:
-                                function (
-                                    items
-                                ) {
+                        minRotation:
+                            isMobile ? 55 : 0,
 
-                                    if (
-                                        !items.length
-                                    ) {
+                        maxRotation:
+                            isMobile ? 55 : 25,
 
-                                        return '';
+                        font: {
 
-                                    }
-
-                                    return labels[
-                                        items[0]
-                                            .dataIndex
-                                    ];
-
-                                },
-
-
-                            label:
-                                function (
-                                    context
-                                ) {
-
-                                    return (
-                                        'Réservations : ' +
-                                        context
-                                            .parsed
-                                            .y
-                                    );
-
-                                }
-
-                        }
-
-                    }
-
-                },
-
-
-                scales: {
-
-                    /*
-                     * AXE DES ACTIVITÉS
-                     */
-                    x: {
-
-                        grid: {
-
-                            display: false
-
+                            size:
+                                isMobile ? 7 : 12
                         },
 
-
-                        ticks: {
-
-                            /*
-                             * IMPORTANT :
-                             * aucune activité
-                             * n'est supprimée.
-                             */
-                            autoSkip: false,
+                        padding: 3
+                    }
+                },
 
 
-                            /*
-                             * Sur téléphone,
-                             * les intitulés sont
-                             * inclinés pour pouvoir
-                             * conserver les 7 activités.
-                             */
-                            minRotation:
-                                isMobile
-                                    ? 55
-                                    : 0,
+                // ---------------------------------------------
+                // AXE Y : 0 → 4 PAR PAS DE 0,5
+                // ---------------------------------------------
 
+                y: {
 
-                            maxRotation:
-                                isMobile
-                                    ? 55
-                                    : 25,
+                    type: 'linear',
 
+                    beginAtZero: true,
 
-                            font: {
+                    min: 0,
 
-                                size:
-                                    isMobile
-                                        ? 7
-                                        : 12
+                    max: 4,
 
-                            },
+                    bounds: 'ticks',
 
+                    grid: {
 
-                            padding:
-                                isMobile
-                                    ? 2
-                                    : 4
+                        display: true,
 
-                        }
+                        drawOnChartArea: true,
+
+                        drawTicks: true,
+
+                        offset: false
 
                     },
 
+                    ticks: {
 
-                    /*
-                     * AXE DU NOMBRE
-                     * DE RÉSERVATIONS
-                     */
-                    y: {
+                        display: true,
 
-                        beginAtZero: true,
+                        autoSkip: false,
 
+                        min: 0,
 
-                        ticks: {
+                        max: 4,
 
-                            /*
-                             * Pas de 1,5 ou 2,5 :
-                             * une réservation est
-                             * toujours un entier.
-                             */
-                            precision: 0,
+                        stepSize: 0.5,
 
-                            stepSize: 1,
+                        precision: 1,
 
+                        font: {
 
-                            font: {
+                            size:
+                                isMobile ? 9 : 12
+                        },
 
-                                size:
-                                    isMobile
-                                        ? 9
-                                        : 12
+                        callback: function (value) {
 
-                            }
-
+                            return Number(value)
+                                .toFixed(1)
+                                .replace('.', ',');
                         }
-
                     }
-
                 }
-
             }
-
         }
-    );
-
+    });
 }
 
 
 // ------------------------------------------------------------
-// 4. ACTUALISATION ASYNCHRONE DES PLACES DISPONIBLES
+// 4. ACTUALISATION ASYNCHRONE DES PLACES
 // ------------------------------------------------------------
 
 const refreshBtn =
-    document.getElementById(
-        'refresh-sessions'
-    );
+    document.getElementById('refresh-sessions');
 
 
 if (refreshBtn) {
 
-    refreshBtn.addEventListener(
-        'click',
-        async () => {
+    refreshBtn.addEventListener('click', async () => {
 
-            const box =
-                refreshBtn.closest(
-                    '[data-activity-id]'
+        const box =
+            refreshBtn.closest(
+                '[data-activity-id]'
+            );
+
+        const status =
+            document.getElementById(
+                'sessions-status'
+            );
+
+        const id =
+            box?.dataset.activityId;
+
+        if (!id) return;
+
+        refreshBtn.disabled = true;
+
+        if (status) {
+            status.textContent =
+                'Actualisation en cours…';
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/activite/${encodeURIComponent(id)}/seances`,
+                    {
+                        headers: {
+                            Accept: 'application/json'
+                        },
+                        cache: 'no-store'
+                    }
                 );
 
-
-            const status =
-                document.getElementById(
-                    'sessions-status'
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP ${response.status}`
                 );
-
-
-            const id =
-                box?.dataset.activityId;
-
-
-            if (!id) {
-                return;
             }
 
+            const payload =
+                await response.json();
 
-            refreshBtn.disabled =
-                true;
+            payload.sessions.forEach(session => {
+
+                const el =
+                    document.querySelector(
+                        `[data-session-remaining="${session.id}"]`
+                    );
+
+                if (!el) return;
+
+                const remaining =
+                    Number(session.remaining);
+
+                el.textContent =
+                    `${remaining} places`;
+
+                el.classList.toggle(
+                    'text-danger',
+                    remaining <= 3
+                );
+
+                el.classList.toggle(
+                    'text-success',
+                    remaining > 3
+                );
+            });
 
 
             if (status) {
 
                 status.textContent =
-                    'Actualisation en cours…';
-
+                    `Disponibilités actualisées à ${
+                        new Date().toLocaleTimeString(
+                            'fr-FR',
+                            {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                            }
+                        )
+                    }.`;
             }
 
+        } catch (error) {
 
-            try {
-
-                const response =
-                    await fetch(
-                        `/api/activite/${encodeURIComponent(id)}/seances`,
-                        {
-
-                            headers: {
-
-                                Accept:
-                                    'application/json'
-
-                            },
-
-                            cache:
-                                'no-store'
-
-                        }
-                    );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        `HTTP ${response.status}`
-                    );
-
-                }
-
-
-                const payload =
-                    await response.json();
-
-
-                payload.sessions.forEach(
-                    session => {
-
-                        const el =
-                            document.querySelector(
-                                `[data-session-remaining="${session.id}"]`
-                            );
-
-
-                        if (!el) {
-                            return;
-                        }
-
-
-                        const remaining =
-                            Number(
-                                session.remaining
-                            );
-
-
-                        el.textContent =
-                            `${remaining} places`;
-
-
-                        el.classList.toggle(
-                            'text-danger',
-                            remaining <= 3
-                        );
-
-
-                        el.classList.toggle(
-                            'text-success',
-                            remaining > 3
-                        );
-
-                    }
-                );
-
-
-                if (status) {
-
-                    status.textContent =
-                        `Disponibilités actualisées à ${
-                            new Date()
-                                .toLocaleTimeString(
-                                    'fr-FR',
-                                    {
-
-                                        hour:
-                                            '2-digit',
-
-                                        minute:
-                                            '2-digit',
-
-                                        second:
-                                            '2-digit'
-
-                                    }
-                                )
-                        }.`;
-
-                }
-
-
-            } catch (error) {
-
-                if (status) {
-
-                    status.textContent =
-                        'Impossible d’actualiser les places. Réessayez dans un instant.';
-
-                }
-
-
-                console.error(
-                    'PENDAFITNESS sessions fetch',
-                    error
-                );
-
-
-            } finally {
-
-                refreshBtn.disabled =
-                    false;
-
+            if (status) {
+                status.textContent =
+                    'Impossible d’actualiser les places. Réessayez dans un instant.';
             }
 
+            console.error(
+                'PENDAFITNESS sessions fetch',
+                error
+            );
+
+        } finally {
+
+            refreshBtn.disabled = false;
         }
-    );
-
+    });
 }
