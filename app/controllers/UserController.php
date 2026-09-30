@@ -1,6 +1,51 @@
 <?php class UserController{
 function reservations(){requireAuth();require_once __DIR__.'/../models/Reservation.php';$items=Reservation::mine(auth()['id']);view('user/reservations',compact('items'));}
-function book(){requireAuth();check_csrf();require_once __DIR__.'/../models/Reservation.php';$ok=Reservation::create(auth()['id'],(int)$_POST['session_id']);flash($ok?'success':'danger',$ok?'Réservation confirmée.':'Réservation impossible : cette séance est indisponible, complète, annulée ou bloquée.');redirect('/mes-reservations');}
+function book()
+{
+    requireAuth();
+    check_csrf();
+
+    require_once __DIR__ . '/../models/Reservation.php';
+
+    $userId = (int) auth()['id'];
+    $sessionId = (int) ($_POST['session_id'] ?? 0);
+
+    /*
+     * Vérifie d'abord si cette réservation est
+     * déjà confirmée pour cet utilisateur.
+     */
+    $q = db()->prepare("
+        SELECT id
+        FROM reservations
+        WHERE user_id = ?
+          AND session_id = ?
+          AND status = 'confirmed'
+        LIMIT 1
+    ");
+
+    $q->execute([$userId, $sessionId]);
+
+    if ($q->fetch()) {
+        flash(
+            'danger',
+            'Vous avez déjà réservé cette séance.'
+        );
+
+        redirect('/mes-reservations');
+        return;
+    }
+
+    $ok = Reservation::create($userId, $sessionId);
+
+    flash(
+        $ok ? 'success' : 'danger',
+        $ok
+            ? 'Réservation confirmée.'
+            : 'Réservation impossible : cette séance est indisponible, complète, annulée ou bloquée.'
+    );
+
+    redirect('/mes-reservations');
+}
 function cancel(){requireAuth();check_csrf();require_once __DIR__.'/../models/Reservation.php';$ok=Reservation::cancel((int)$_POST['id'],auth()['id']);flash($ok?'success':'warning',$ok?'Réservation annulée.':'Annulation impossible : réservation introuvable ou séance déjà commencée.');redirect('/mes-reservations');}
 function profile(){requireAuth();if($_SERVER['REQUEST_METHOD']==='POST'){check_csrf();require_once __DIR__.'/../models/User.php';User::updateProfile(auth()['id'],$_POST);$_SESSION['user']['firstname']=trim($_POST['firstname']);$_SESSION['user']['lastname']=trim($_POST['lastname']);$_SESSION['user']['phone']=trim($_POST['phone']??'');$_SESSION['user']['city']=trim($_POST['city']??'');flash('success','Profil mis à jour.');redirect('/profil');}view('user/profile');}
 function favorites(){requireAuth();require_once __DIR__.'/../models/Favorite.php';$activities=Favorite::mine(auth()['id']);view('user/favorites',compact('activities'));}
