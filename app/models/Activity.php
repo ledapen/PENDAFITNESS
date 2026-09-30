@@ -221,41 +221,38 @@ class Activity
      * restent visibles afin de permettre leur administration.
      */
     public static function upcomingSessions()
-    {
-        require_once __DIR__ . '/Session.php';
+{
+    require_once __DIR__ . '/Session.php';
 
-        Session::generateFutureSessions();
+    Session::generateFutureSessions();
 
-        return db()->query("
-            SELECT
-                s.*,
-                a.title,
-                (s.capacity - COUNT(r.id)) remaining
-            FROM sessions s
-            JOIN activities a ON a.id = s.activity_id
-            LEFT JOIN reservations r
-                ON r.session_id = s.id
-                AND r.status <> 'cancelled'
-            WHERE s.starts_at > NOW()
-            GROUP BY s.id
-            ORDER BY s.starts_at
-            LIMIT 200
-        ")->fetchAll();
-    }
-
-    /**
-     * Ancienne méthode conservée pour compatibilité.
-     *
-     * Une séance n'est désormais plus supprimée physiquement :
-     * elle est annulée afin de préserver l'historique.
-     */
-    public static function deleteSession($id)
-    {
-        require_once __DIR__ . '/Session.php';
-
-        return Session::cancel(
-            (int) $id,
-            'Séance annulée par le coach.'
-        );
-    }
+    return db()->query("
+        SELECT
+            s.id,
+            s.activity_id,
+            s.schedule_id,
+            s.starts_at,
+            s.duration_minutes,
+            s.capacity,
+            s.coach_name,
+            s.room,
+            s.status,
+            s.cancellation_reason,
+            a.title,
+            (
+                s.capacity - (
+                    SELECT COUNT(*)
+                    FROM reservations r
+                    WHERE r.session_id = s.id
+                      AND r.status <> 'cancelled'
+                )
+            ) AS remaining
+        FROM sessions s
+        JOIN activities a
+            ON a.id = s.activity_id
+        WHERE s.starts_at > NOW()
+        ORDER BY s.starts_at ASC
+        LIMIT 200
+    ")->fetchAll();
+}
 }
