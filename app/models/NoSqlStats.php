@@ -8,26 +8,14 @@ class NoSqlStats
      */
     private static function client(): ?Redis
     {
-        // Diagnostic temporaire pour Render.
-        // Aucune URL, aucun identifiant et aucun mot de passe ne sont affichés.
-        error_log(
-            'Redis diagnostic - extension: ' .
-            (class_exists('Redis') ? 'OK' : 'ABSENTE')
-        );
-
-        $redisUrl = envv('REDIS_URL', '');
-
-        error_log(
-            'Redis diagnostic - REDIS_URL: ' .
-            ($redisUrl !== '' ? 'PRESENTE' : 'ABSENTE')
-        );
-
         // Vérifie que l'extension PHP Redis est disponible.
         if (!class_exists('Redis')) {
             return null;
         }
 
-        // Vérifie que REDIS_URL existe.
+        // Récupère l'URL Redis depuis les variables d'environnement.
+        $redisUrl = envv('REDIS_URL', '');
+
         if ($redisUrl === '') {
             return null;
         }
@@ -46,19 +34,19 @@ class NoSqlStats
             $scheme = $parts['scheme'] ?? 'redis';
             $port = (int) ($parts['port'] ?? 6379);
 
-            // Render peut fournir redis:// ou rediss://.
+            // Prise en charge des connexions Redis sécurisées TLS.
             $host = $scheme === 'rediss'
                 ? 'tls://' . $parts['host']
                 : $parts['host'];
 
-            // Connexion avec timeout de 2 secondes.
+            // Connexion avec un timeout de 2 secondes.
             $redis->connect(
                 $host,
                 $port,
                 2.0
             );
 
-            // Authentification si nécessaire.
+            // Authentification si elle est requise.
             if (isset($parts['pass'])) {
                 $user = $parts['user'] ?? null;
 
@@ -71,8 +59,6 @@ class NoSqlStats
                     $redis->auth($parts['pass']);
                 }
             }
-
-            error_log('Redis diagnostic - connexion: OK');
 
             return $redis;
 
@@ -99,9 +85,13 @@ class NoSqlStats
         try {
             $day = date('Y-m-d');
 
+            /*
+             * Compteur journalier de consultations.
+             * Exemple :
+             * pendafitness:activity:4:views:2026-09-30
+             */
             $key = "pendafitness:activity:{$activityId}:views:{$day}";
 
-            // Incrémente le compteur de consultations.
             $redis->incr($key);
 
             // Conservation du compteur pendant 31 jours.
@@ -110,8 +100,10 @@ class NoSqlStats
                 60 * 60 * 24 * 31
             );
 
-            // Conserve également la dernière consultation
-            // de chaque activité.
+            /*
+             * Stocke également la dernière consultation
+             * enregistrée pour chaque activité.
+             */
             $redis->hSet(
                 'pendafitness:last_views',
                 (string) $activityId,
@@ -122,12 +114,6 @@ class NoSqlStats
                     ],
                     JSON_UNESCAPED_SLASHES
                 )
-            );
-
-            error_log(
-                'Redis diagnostic - écriture activité ' .
-                $activityId .
-                ': OK'
             );
 
             return true;
